@@ -10,7 +10,6 @@ const int HASH_LEN=33;        // Length of MD5 hash strings
 
 int tryguess(char *hash, char *guess);
 char ** read_dictionary(char *filename, int *size);
-char **argv;
 
 int main(int argc, char *argv[])
 {
@@ -23,7 +22,7 @@ int main(int argc, char *argv[])
     // Read the dictionary file into an array of strings.
     int dlen;
     char **dict = read_dictionary(argv[2], &dlen);
-
+    printf("dlen: %d\n", dlen);
     // Open the hash file for reading.
     FILE *hashes = fopen(argv[1], "r");
     if (!hashes)
@@ -36,14 +35,15 @@ int main(int argc, char *argv[])
     // Print the matching dictionary entry.
     // Need two nested loops.
     char hashchar[50];
+    printf("are we getting there okay..\n");
     while (fgets(hashchar, 50, hashes) != NULL)
     {
         hashchar[strlen(hashchar)-1] = '\0';
-        for (int i = 0; i < dlen; i++)
+        for (int i = 0; i < dlen - 1; i++)
         {
             if (tryguess( hashchar, dict[i]) == 1)
             {
-                printf("%s", dict[i]);
+                printf("%s\n", dict[i]);
             }
         }
     }
@@ -73,40 +73,41 @@ int tryguess(char *hash, char *guess)
 char ** read_dictionary(char *filename, int *size)
 {
     struct stat info;
-    if (stat(filename, &info) == -1) *size = 0;
-    else *size = info.st_size;
+    int file_size;
+    if (stat(filename, &info) == -1) file_size = 0;
+    else file_size = info.st_size;
+    printf("file size: %d\n", file_size);
+    char *contents = malloc(file_size);
     
-    char *contents = malloc(*size);
-    
-    FILE *f = fopen(argv[2], "r");
+    FILE *f = fopen(filename, "r");
     if (!f)
     {
         printf("can't open %s for reading\n", "fruit.txt");
         exit(1);
     }
     //read entire file into memory all at once
-    fread(contents, 1, *size, f);
+    fread(contents, 1, file_size, f);
     fclose(f);
     
-    int numpass = 0;
+    *size = 0;
     
     //replace newlines with null characters
-    for (int i = 0; i < *size; i++)
+    for (int i = 0; i < file_size; i++)
     {
         if (contents[i] == '\n')
         {
-            numpass++;
+            (*size)++;
             contents[i] = '\0';
         }
     }
-    
-    char **passwords = malloc(numpass*sizeof(char *));
+    printf("*size: %d\n", *size);
+    char **passwords = malloc(*size * sizeof(char *));
     
     //fill in each address
     passwords[0] = contents;
     int j = 1;
     
-    for (int i = 0; i < *size - 1; i++)
+    for (int i = 0; i < file_size - 1; i++)
     {
         if (contents[i] == '\0')
         {
